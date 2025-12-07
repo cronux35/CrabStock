@@ -81,6 +81,43 @@
 
 
 
+<!-- Panel Fermentation -->
+<div id='panel-fermentation' class='panel' hidden>
+  <div class='panel-head'><button data-close class='ghost'>← Retour</button><h2>Suivi de fermentation</h2></div>
+  <form id='form-fermentation' class='form'>
+    <div class='row'><input name='nom_biere' placeholder='Nom de la bière'></div>
+    <div class='row'><input name='style' placeholder='Style'></div>
+    <div class='row'><input name='densite' placeholder='Densité (SG ou °Plato)'></div>
+    <div class='row'><input name='temperature' placeholder='Température (°C)'></div>
+    <div class='row'><input name='ph' placeholder='pH'></div>
+    <div class='row'><input name='purge' placeholder='Date purge'></div>
+    <div class='form-actions'><button type='submit' class='primary'>Ajouter suivi</button></div>
+  </form>
+  <div class='table-wrap'>
+    <table id='fermentation-table' class='table'>
+      <thead><tr><th>Date</th><th>Bière</th><th>Style</th><th>Densité</th><th>Température</th><th>pH</th><th>Purge</th></tr></thead>
+      <tbody></tbody>
+    </table>
+  </div>
+</div>
 
-
-
+<!-- Panel Conditionnement -->
+<div id='panel-conditionnement' class='panel' hidden>
+  <div class='panel-head'><button data-close class='ghost'>← Retour</button><h2>Suivi du conditionnement</h2></div>
+  <form id='form-conditionnement' class='form'>
+    <div class='row'><input name='nom_biere' placeholder='Nom de la bière'></div>
+    <div class='row'><input name='volume_total' placeholder='Volume total (L)'></div>
+    <div class='row'><input name='futs' placeholder='Fûts (nombre)'></div>
+    <div class='row'><input name='bouteilles_33' placeholder='Bouteilles 33cl'></div>
+    <div class='row'><input name='bouteilles_50' placeholder='Bouteilles 50cl'></div>
+    <div class='row'><input name='bouteilles_75' placeholder='Bouteilles 75cl'></div>
+    <div class='row'><input name='canettes_44' placeholder='Canettes 44cl'></div>
+    <div class='form-actions'><button type='submit' class='primary'>Ajouter conditionnement</button></div>
+  </form>
+  <div class='table-wrap'>
+    <table id='conditionnement-table' class='table'>
+      <thead><tr><th>Date</th><th>Bière</th><th>Volume (L)</th><th>Fûts</th><th>33cl</th><th>50cl</th><th>75cl</th><th>44cl</th><th>Lot</th></tr></thead>
+      <tbody></tbody>
+    </table>
+  </div>
+</div>
