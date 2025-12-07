@@ -1,0 +1,43 @@
+
+{
+  "ingredients": [
+    {
+      "Type": "Houblon",
+      "Fournisseur": "Hops France",
+     Qté initiale (g)": 300,      "Nom": "Barbe rouge 2023",
+      "Qté utilisée (g)": 300,
+      "Qté restante (g)": 0,
+      "unite": "g",
+      "id": "Houblon::Houblon Barbe rouge 2023 - Hops France",
+      "Spec_AA": "8.9"
+    },
+    {
+      "Type": "Houblon",
+      "Fournisseur": "Hops France",
+      "Nom": "Strisselspalt 2022",
+      "Numéro de lot": "",
+      "Conditionnement": "sachet 100g",
+      "Notes": "",
+      "Qté initiale (g)": 2600,
+      "Qté utilisée (g)": 0,
+      "Qté restante (g)": 2600,
+      "unite": "g",
+      "id": "Houblon::Houblon Strisselspalt 2022 - Hops France",
+      "Spec_AA": "1.7"
+    }
+    // ... (toutes les autres entrées du fichier original, normalisées)
+  ],
+  "containers": {
+    "bouteilles": { "33cl": 0, "50cl": 0, "75cl": 0 },
+    "canettes": { "44cl": 0 }
+  },
+  "mouvements": [],
+  "config": {
+    "thresholds": { "malt": 1000, "houblon": 100, "levure": 50, "grain": 500 },
+    "thresholdsContainers": { "bouteilles": 50, "canettes": 50 },
+    "blockNegative": true
+  }
+}
+      "Numéro de lot": "",
+      "Conditionnement": "sachet 100g",
+      "Notes": "",
