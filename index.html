@@ -2,46 +2,20 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>CrabStock – Brasserie associative</title>
-  <!-- Feuille de styles -->
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CrabStock — Test head</title>
+
+  <!-- Doit afficher une page verte si le <link> fonctionne -->
   ./styles.css
-  <!-- SheetJS pour import Excel (.xlsx) -->
-  <script src="https://unpkg.com/xlsx@0.19.3ll.min.js</script>
-  <!-- JS applicatif -->
-  ./script.js</script>
+
+  <!-- Script test -->
+  <script>
+    console.log('head OK');
+  </script>
 </head>
 <body>
-  <!-- Barre d’app (mobile-friendly) -->
-  <header class="appbar">
-    <h1>CrabStock</h1>
-    <nav class="actions">
-      <button class="icon-btn" aria-label="Voir stocks" data-open="view">🧾<span>Stocks</span></button>
-      <button class="icon-btn" aria-label="Ajouter ingrédient" data-open="add">➕<span>Ajouter</span></button>
-      <button class="icon-btn" aria-label="Sortir ingrédient" data-open="use">➖<span>Sortir</span></button>
-      <button class="icon-btn" aria-label="Contenants" data-open="containers">🧴<span>Contenants</span></button>
-      <button class="icon-btn" aria-label="Historique" data-open="history">⏱️<span>Historique</span></button>
-      <button class="icon-btn" aria-label="Import" data-open="import">📥<span>Import</span></button>
-    </nav>
-  </header>
-
-  <!-- Accueil / 5 actions -->
-  <main class="content" id="home">
-    <section class="grid">
-      <article class="card clickable" data-open="view"><h2>1. Voir les stocks</h2><p>Recherche + filtres, alertes de niveau.</p></article>
-      <article class="card clickable" data-open="add"><h2>2. Ajouter un ingrédient</h2><p>Malt/Houblon/Levure/Divers avec champs dédiés.</p></article>
-      <article class="card clickable" data-open="use"><h2>3. Sortir un ingrédient</h2><p>Blocage des négatifs (paramétrable).</p></article>
-      <article class="card clickable" data-open="containers"><h2>4. Contenants</h2><p>Entrée/Sortie par format (33/50/75, 44).</p></article>
-      <article class="card clickable" data-open="history"><h2>5. Historique</h2><p>Filtrable par type/texte.</p></article>
-    </section>
-  </main>
-
-  <!-- Stocks -->
-  <section class="panel" id="panel-view" hidden>
-    <header class="panel-head">
-      <h2>Stocks disponibles</h2>
-      <div class="toolbar">
-        <input id="search" placeholder="Rechercher (nom, fournisseur, type, lot)" />
-        <select id="filter-type">
-
+  <h1>CrabStock — Test</h1>
+  <p>Si cette page est en <strong>vert</strong>, le CSS est bien chargé.</p>
+</body>
+</html>
