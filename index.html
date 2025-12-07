@@ -1,56 +1,79 @@
+
 <!DOCTYPE html>
-<html lang='fr'>
+<html lang="fr">
 <head>
-<meta charset='UTF-8'>
-<meta name='viewport' content='width=device-width, initial-scale=1.0'>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>CrabStock</title>
-<link rel='stylesheet' href='styles.css'>
-<script src='https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js'></script>
-<script src='script.js' defer></script>
+styles_final.css
+https://example.com/logo-crab.png <!-- Remplace par l'URL réelle du logo -->
+<script src="httpsvr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js</script>
+script_final.js</script>
 </head>
 <body>
-<header class='appbar'><h1>CrabStock</h1></header>
-<main id='home' class='content'>
-  <div class='actions'>
-    <button class='icon-btn' data-open='stocks'>📦 <span>Stocks</span></button>
-    <button class='icon-btn' data-open='add'>➕ <span>Ajouter ingrédient</span></button>
-    <button class='icon-btn' data-open='use'>➖ <span>Sortir ingrédient</span></button>
-    <button class='icon-btn' data-open='containers'>🍺 <span>Contenants</span></button>
-    <button class='icon-btn' data-open='history'>📜 <span>Historique</span></button>
-    <button class='icon-btn' data-open='import'>⬆️ <span>Import/Export</span></button>
+<header class="appbar">
+  <img src="https://example.com/logo-crab.pnglace par l'URL réelle -->
+</header>
+
+<main id="home" class="content">
+  <div class="actions">
+    <button class="icon-btn" data-open="stocks">📦 <span>Stocks</span></button>
+    <button class="icon-btn" data-open="add">➕ <span>Ajouter ingrédient</span></button>
+    <button class="icon-btn" data-open="use">➖ <span>Sortir ingrédient</span></button>
+    <button class="icon-btn" data-open="containers">🍺 <span>Contenants</span></button>
+    <button class="icon-btn" data-open="history">📜 <span>Historique</span></button>
+    <button class="icon-btn" data-open="import">⬆️ <span>Import/Export</span></button>
   </div>
-  <div id='containers-summary' class='chip-row'></div>
-  <div class='toolbar'>
-    <input id='search' placeholder='Recherche...'>
-    <select id='filter-type'><option value=''>Tous types</option><option value='Malt'>Malt</option><option value='Houblon'>Houblon</option><option value='Levure'>Levure</option><option value='Grain'>Grain</option></select>
-    <label class='check'><input type='checkbox' id='only-low'> Stocks faibles</label>
+
+  <div id="containers-summary" class="chip-row"></div>
+
+  <div class="toolbar">
+    <input id="search" placeholder="Recherche...">
+    <select id="filter-type">
+      <option value="">Tous types</option>
+      <option value="Malt">Malt</option>
+      <option value="Houblon">Houblon</option>
+      <option value="Levure">Levure</option>
+      <option value="Grain">Grain</option>
+    </select>
+    <label class="check"><input type="checkbox" id="only-low"> Stocks faibles</label>
   </div>
-  <div class='table-wrap'>
-    <table id='ingredients-table' class='table'>
-      <thead><tr><th>Type</th><th>Fournisseur</th><th>Nom</th><th>Lot</th><th>Spec</th><th>Cond.</th><th>Notes</th><th>Qté init.</th><th>Qté utilisée</th><th>Qté restante</th><th>⚙️</th></tr></thead>
+
+  <div class="table-wrap">
+    <table id="ingredients-table" class="table">
+      <thead>
+        <tr>
+          <th>Type</th><th>Fournisseur</th><th>Nom</th><th>Lot</th><th>Spec</th>
+          <th>Cond.</th><th>Notes</th><th>Qté init.</th><th>Qté utilisée</th><th>Qté restante</th><th>⚙️</th>
+        </tr>
+      </thead>
       <tbody></tbody>
     </table>
   </div>
 </main>
 
 <!-- Panel Ajouter -->
-<div id='panel-add' class='panel' hidden>
-  <div class='panel-head'><button data-close class='ghost'>← Retour</button><h2>Ajouter ingrédient</h2></div>
-  <form id='form-add' class='form'>
-    <div class='row'><label>Type<select name='Type'><option>Malt</option><option>Houblon</option><option>Levure</option><option>Grain</option></select></label></div>
-    <div class='row'><input name='Fournisseur' placeholder='Fournisseur'></div>
-    <div class='row'><input id='input-nom' name='Nom' placeholder='Nom (auto-complétion)'></div>
-    <div class='row'><input name='Numéro de lot' placeholder='Numéro de lot'></div>
-    <div id='row-spec' class='row'><label id='label-spec'>Spec</label><input name='Spec (%AA, EBC...)'></div>
-    <div id='row-peremption' class='row' hidden><input name='Peremption' placeholder='Date de péremption'></div>
-    <div class='row'><select id='select-cond' name='Conditionnement'></select><input id='input-cond-other' placeholder='Autre conditionnement' style='display:none;'></div>
-    <div class='row'><input name='Notes' placeholder='Notes'></div>
-    <div class='row'><input name='Qté initiale (g)' placeholder='Qté initiale (g)'></div>
-    <div class='form-actions'><button type='submit' class='primary'>Ajouter</button></div>
+<div id="panel-add" class="panel" hidden>
+  <div class="panel-head"><button data-close class="ghost">← Retour</button><h2>Ajouter ingrédient</h2></div>
+  <form id="form-add" class="form">
+    <div class="row"><label>Type<select name="Type"><option>Malt</option><option>Houblon</option><option>Levure</option><option>Grain</option></select></label></div>
+    <div class="row"><input name="Fournisseur" placeholder="Fournisseur"></div>
+    <div class="row"><input id="input-nom" name="Nom" placeholder="Nom (auto-complétion)"></div>
+    <div class="row"><input name="Numéro de lot" placeholder="Numéro de lot"></div>
+    <div id="row-spec" class="row"><label id="label-spec">Spec</label><input name="Spec (%AA, EBC...)"></div>
+    <div id="row-peremption" class="row" hidden><input name="Peremption" placeholder="Date de péremption"></div>
+    <div class="row">
+      <select id="select-cond" name="Conditionnement"></select>
+      <input id="input-cond-other" placeholder="Autre conditionnement" style="display:none;">
+    </div>
+    <div class="row"><input name="Notes" placeholder="Notes"></div>
+    <div class="row"><input name="Qté initiale (g)" placeholder="Qté initiale (g)"></div>
+    <div class="form-actions"><button type="submit" class="primary">Ajouter</button></div>
   </form>
 </div>
 
-<!-- Autres panels (use, containers, history, import) restent similaires -->
-<footer class='footer'>CrabStock © 2025</footer>
+<footer class="footer">
+  CrabStock - Association CRAB Rennes © 2025
+</footer>
 </body>
 </html>
