@@ -1,85 +1,100 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html lang='fr'>
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset='UTF-8'>
+<meta name='viewport' content='width=device-width, initial-scale=1.0'>
 <title>CrabStock</title>
-<link rel="stylesheet" href="styles.css">
+<link rel='stylesheet' href='styles.css'>
+<script src='https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js'></script>
+<script src='script.js' defer></script>
 </head>
 <body>
-<header class="appbar"><h1>CrabStock</h1></header>
-<div id="home" class="content">
-  <div class="actions">
-    <button class="icon-btn" data-open="add">Ajouter ingrédient</button>
-    <button class="icon-btn" data-open="use">Sortir ingrédient</button>
-    <button class="icon-btn" data-open="containers">Contenants</button>
-    <button class="icon-btn" data-open="history">Historique</button>
-    <button class="icon-btn" data-open="import">Import/Export</button>
+<header class='appbar'>
+  <h1>CrabStock</h1>
+</header>
+<main id='home' class='content'>
+  <div class='actions'>
+    <button class='icon-btn' data-open='stocks'>📦 <span>Stocks</span></button>
+    <button class='icon-btn' data-open='add'>➕ <span>Ajouter ingrédient</span></button>
+    <button class='icon-btn' data-open='use'>➖ <span>Sortir ingrédient</span></button>
+    <button class='icon-btn' data-open='containers'>🍾 <span>Contenants</span></button>
+    <button class='icon-btn' data-open='history'>📜 <span>Historique</span></button>
+    <button class='icon-btn' data-open='import'>⬆️ <span>Import/Export</span></button>
   </div>
-  <div id="containers-summary" class="chip-row"></div>
-  <div class="table-wrap">
-    <table id="ingredients-table" class="table"><thead><tr><th>Type</th><th>Fournisseur</th><th>Nom</th><th>Lot</th><th>Spec</th><th>Cond.</th><th>Notes</th><th>Qté init.</th><th>Qté utilisée</th><th>Qté restante</th></tr></thead><tbody></tbody></table>
+  <div id='containers-summary' class='chip-row'></div>
+  <div class='toolbar'>
+    <input id='search' placeholder='Recherche...'>
+    <select id='filter-type'>
+      <option value=''>Tous types</option>
+      <option value='Malt'>Malt</option>
+      <option value='Houblon'>Houblon</option>
+      <option value='Levure'>Levure</option>
+      <option value='Divers'>Divers</option>
+    </select>
+    <label class='check'><input type='checkbox' id='only-low'> Stocks faibles</label>
   </div>
-</div>
+  <div class='table-wrap'>
+    <table id='ingredients-table' class='table'>
+      <thead><tr><th>Type</th><th>Fournisseur</th><th>Nom</th><th>Lot</th><th>Spec</th><th>Cond.</th><th>Notes</th><th>Qté init.</th><th>Qté utilisée</th><th>Qté restante</th></tr></thead>
+      <tbody></tbody>
+    </table>
+  </div>
+</main>
 
-<!-- Panel Ajouter -->
-<div id="panel-add" class="panel" hidden>
-  <div class="panel-head"><button data-close>Retour</button><h2>Ajouter ingrédient</h2></div>
-  <form id="form-add" class="form">
-    <div class="row"><label>Type<select name="Type"><option>Malt</option><option>Houblon</option><option>Levure</option><option>Divers</option></select></label></div>
-    <div class="row"><input name="Fournisseur" placeholder="Fournisseur"></div>
-    <div class="row"><input name="Nom" placeholder="Nom"></div>
-    <div class="row"><input name="Numéro de lot" placeholder="Lot"></div>
-    <div id="row-spec" class="row"><label id="label-spec">Spec</label><input name="Spec (%AA, EBC...)"></div>
-    <div id="row-peremption" class="row" hidden><input name="Peremption" placeholder="DLUO"></div>
-    <div class="row"><input name="Conditionnement" placeholder="Conditionnement"></div>
-    <div class="row"><input name="Notes" placeholder="Notes"></div>
-    <div class="row"><input name="Qté initiale (g)" placeholder="Qté initiale"></div>
-    <div class="form-actions"><button type="submit" class="primary">Ajouter</button></div>
+<!-- Panels -->
+<div id='panel-add' class='panel' hidden>
+  <div class='panel-head'><button data-close class='ghost'>← Retour</button><h2>Ajouter ingrédient</h2></div>
+  <form id='form-add' class='form'>
+    <div class='row'><label>Type<select name='Type'><option>Malt</option><option>Houblon</option><option>Levure</option><option>Divers</option></select></label></div>
+    <div class='row'><input name='Fournisseur' placeholder='Fournisseur'></div>
+    <div class='row'><input name='Nom' placeholder='Nom'></div>
+    <div class='row'><input name='Numéro de lot' placeholder='Numéro de lot'></div>
+    <div id='row-spec' class='row'><label id='label-spec'>Spec</label><input name='Spec (%AA, EBC...)'></div>
+    <div id='row-peremption' class='row' hidden><input name='Peremption' placeholder='Date de péremption'></div>
+    <div class='row'><input name='Conditionnement' placeholder='Conditionnement'></div>
+    <div class='row'><input name='Notes' placeholder='Notes'></div>
+    <div class='row'><input name='Qté initiale (g)' placeholder='Qté initiale (g)'></div>
+    <div class='form-actions'><button type='submit' class='primary'>Ajouter</button></div>
   </form>
 </div>
 
-<!-- Panel Sortir -->
-<div id="panel-use" class="panel" hidden>
-  <div class="panel-head"><button data-close>Retour</button><h2>Sortir ingrédient</h2></div>
-  <input id="use-search" placeholder="Recherche">
-  <select id="use-select"></select>
-  <form id="form-use" class="form">
-    <div class="row"><input name="quantite" placeholder="Quantité"></div>
-    <div class="row"><input name="motif" placeholder="Motif"></div>
-    <div class="row"><input name="notes" placeholder="Notes"></div>
-    <div class="form-actions"><button type="submit" class="primary">Sortir</button></div>
+<div id='panel-use' class='panel' hidden>
+  <div class='panel-head'><button data-close class='ghost'>← Retour</button><h2>Sortir ingrédient</h2></div>
+  <input id='use-search' placeholder='Recherche ingrédient'>
+  <select id='use-select'></select>
+  <form id='form-use' class='form'>
+    <div class='row'><input name='quantite' placeholder='Quantité (g)'></div>
+    <div class='row'><input name='motif' placeholder='Motif'></div>
+    <div class='row'><input name='notes' placeholder='Notes'></div>
+    <div class='form-actions'><button type='submit' class='primary'>Sortir</button></div>
   </form>
 </div>
 
-<!-- Panel Contenants -->
-<div id="panel-containers" class="panel" hidden>
-  <div class="panel-head"><button data-close>Retour</button><h2>Contenants</h2></div>
-  <div class="row">Bouteilles 33cl: <input id="bouteilles-33"><button data-cont="bouteilles.33cl" data-dir="in">Entrée</button><button data-cont="bouteilles.33cl" data-dir="out">Sortie</button></div>
-  <div class="row">Bouteilles 50cl: <input id="bouteilles-50"><button data-cont="bouteilles.50cl" data-dir="in">Entrée</button><button data-cont="bouteilles.50cl" data-dir="out">Sortie</button></div>
-  <div class="row">Bouteilles 75cl: <input id="bouteilles-75"><button data-cont="bouteilles.75cl" data-dir="in">Entrée</button><button data-cont="bouteilles.75cl" data-dir="out">Sortie</button></div>
-  <div class="row">Canettes 44cl: <input id="canettes-44"><button data-cont="canettes.44cl" data-dir="in">Entrée</button><button data-cont="canettes.44cl" data-dir="out">Sortie</button></div>
+<div id='panel-containers' class='panel' hidden>
+  <div class='panel-head'><button data-close class='ghost'>← Retour</button><h2>Contenants</h2></div>
+  <div class='row'>Bouteilles 33cl: <input id='bouteilles-33'><button data-cont='bouteilles.33cl' data-dir='in'>Entrée</button><button data-cont='bouteilles.33cl' data-dir='out'>Sortie</button></div>
+  <div class='row'>Bouteilles 50cl: <input id='bouteilles-50'><button data-cont='bouteilles.50cl' data-dir='in'>Entrée</button><button data-cont='bouteilles.50cl' data-dir='out'>Sortie</button></div>
+  <div class='row'>Bouteilles 75cl: <input id='bouteilles-75'><button data-cont='bouteilles.75cl' data-dir='in'>Entrée</button><button data-cont='bouteilles.75cl' data-dir='out'>Sortie</button></div>
+  <div class='row'>Canettes 44cl: <input id='canettes-44'><button data-cont='canettes.44cl' data-dir='in'>Entrée</button><button data-cont='canettes.44cl' data-dir='out'>Sortie</button></div>
 </div>
 
-<!-- Panel Historique -->
-<div id="panel-history" class="panel" hidden>
-  <div class="panel-head"><button data-close>Retour</button><h2>Historique</h2></div>
-  <input id="history-search" placeholder="Recherche">
-  <select id="history-filter-type"><option value="">Tous</option><option value="entree">Entrée</option><option value="sortie">Sortie</option></select>
-  <div class="table-wrap"><table id="mvt-table" class="table"><thead><tr><th>Date</th><th>Type</th><th>Objet</th><th>Quantité</th><th>Unité</th><th>Motif</th><th>Notes</th></tr></thead><tbody></tbody></table></div>
+<div id='panel-history' class='panel' hidden>
+  <div class='panel-head'><button data-close class='ghost'>← Retour</button><h2>Historique</h2></div>
+  <input id='history-search' placeholder='Recherche'>
+  <select id='history-filter-type'><option value=''>Tous</option><option value='entree'>Entrée</option><option value='sortie'>Sortie</option></select>
+  <div class='table-wrap'><table id='mvt-table' class='table'><thead><tr><th>Date</th><th>Type</th><th>Objet</th><th>Quantité</th><th>Unité</th><th>Motif</th><th>Notes</th></tr></thead><tbody></tbody></table></div>
 </div>
 
-<!-- Panel Import -->
-<div id="panel-import" class="panel" hidden>
-  <div class="panel-head"><button data-close>Retour</button><h2>Import/Export</h2></div>
-  <input type="file" id="import-xlsx" accept=".xlsx">
-  <button id="btn-import-xlsx">Importer Excel</button>
-  <input type="file" id="import-csv" accept=".csv">
-  <button id="btn-import-csv">Importer CSV</button>
-  <button id="export-json">Exporter JSON</button>
-  <div class="row"><input id="new-format-group" placeholder="Groupe (bouteilles/canettes)"><input id="new-format-size" placeholder="Taille (ex: 33cl)"><button id="add-format">Ajouter format</button></div>
+<div id='panel-import' class='panel' hidden>
+  <div class='panel-head'><button data-close class='ghost'>← Retour</button><h2>Import/Export</h2></div>
+  <input type='file' id='import-xlsx' accept='.xlsx'>
+  <button id='btn-import-xlsx'>Importer Excel</button>
+  <input type='file' id='import-csv' accept='.csv'>
+  <button id='btn-import-csv'>Importer CSV</button>
+  <button id='export-json'>Exporter JSON</button>
+  <div class='row'><input id='new-format-group' placeholder='Groupe (bouteilles/canettes)'><input id='new-format-size' placeholder='Taille (ex: 33cl)'><button id='add-format'>Ajouter format</button></div>
 </div>
 
-<script src="script.js" defer></script>
+<footer class='footer'>CrabStock © 2025</footer>
 </body>
 </html>
