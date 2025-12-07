@@ -1,48 +1,32 @@
 
 :root {
-  --bg: #0b0f14;
-  --surface: #11161d;
-  --line: #1e293b;
-  --ink: #e6eaf0;
-  --muted: #9fb0c4;
-  --accent: #2fb05e;
-  --accent-ink: #072b16;
-  --danger: #ef4444table {  --danger: #ef4444;
-  width: 100%;
-  border-collapse: collapse;
+  --bg: #1A1A1A;
+  --surface: #222;
+  --line: #333;
+  --;  --ink: #F5F5F5;
+  --danger: #EF4444;
+  --radius: .8rem;
+  --space: 1rem;
 }
 
-th, td {
-  padding: .5rem;
+body {
+  margin: 0;
+  font-family: 'Segoe UI', system-ui, sans-serif;
+  background: var(--bg);
+  color: var(--ink);
+}
+
+header.appbar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--surface);
+  padding: var(--space);
   border-bottom: 1px solid var(--line);
 }
 
-th {
-  color: var(--muted);
-}
-
-tr.neg td {
-  background: rgba(239, 68, 68, .15);
-}
-
-button {
-  padding: .4rem .6rem;
-  border-radius: .5rem;
-  border: 1px solid var(--line);
-  cursor: pointer;
-}
-
-button.primary {
-  background: var(--accent);
-  color: var(--accent-ink);
-}
-
-input, select {
-  padding: .4rem;
-  border-radius: .5rem;
-  border: 1px solid var(--line);
-  background: #0d131a;
-  color: var(--ink);
+header.appbar img {
+  height: 48px;
 }
 
 .actions {
@@ -50,22 +34,84 @@ input, select {
   flex-wrap: wrap;
   gap: .5rem;
   padding: var(--space);
+  justify-content: center;
 }
 
 .icon-btn {
   display: flex;
   align-items: center;
-  gap: .3rem;
+  gap: .4rem;
   background: var(--surface);
-}
-  --radius: .9rem;
-  --space: 1rem;
+  color: var(--ink);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: .6rem .9rem;
+  cursor: pointer;
+  font-weight: 600;
 }
 
-body {
-  margin: 0;
-  font-family: system-ui;
-  background: var(--bg);
+.icon-btn:hover {
+  background: var(--accent);
+  color: #000;
+}
+
+.table-wrap {
+  overflow-x: auto;
+  margin: var(--space);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th, td {
+  padding: .6rem;
+  border-bottom: 1px solid var(--line);
+}
+
+th {
+  color: var(--muted);
+  font-weight: 600;
+}
+
+tr.neg td {
+  background: rgba(239, 68, 68, .15);
+}
+
+button {
+  padding: .5rem .8rem;
+  border-radius: var(--radius);
+  border: 1px solid var(--line);
+  cursor: pointer;
+  font-weight: 600;
+}
+
+button.primary {
+  background: var(--accent);
+  color: #000;
+}
+
+button.primary:hover {
+  background: var(--accent-hover);
+}
+
+input, select {
+  padding: .5rem;
+  border-radius: var(--radius);
+  border: 1px solid var(--line);
+  background: #111;
   color: var(--ink);
 }
 
+footer.footer {
+  text-align: center;
+  padding: var(--space);
+  border-top: 1px solid var(--line);
+  color: var(--muted);
+  font-size: .9rem;
+}
+  --muted: #BBBBBB;
+  --accent: #FFD300;
