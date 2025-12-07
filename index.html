@@ -2,45 +2,34 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>CrabStock</title>
-<link rel="stylesheet" type="text/css" href="./styles.css">
-<link rel="icon" type="image/png" href="https://www.crab-rennes.fr/Cropped%20Favicon%20Crab.png" />
-<script src="httpsvr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"</script>
-<script src="./script.js"</script>
+  <meta charset="utf-8" />
+  <title>CrabStock – Gestion de brasserie</title>
+  style.css
+  <style>
+    /* Fallback si style.css absent */
+    table { width: 100%; border-collapse: collapse; }
+    thead th, td { border: 1px solid #ddd; padding: 6px; }
+    .neg { background: #ffe5e5; } /* stocks négatifs en rouge clair */
+    .toolbar { display:flex; gap:12px; align-items:center; margin-bottom:10px; }
+    h3 { margin-top: 24px; }
+  </style>
 </head>
 <body>
-<header class="appbar">
-  <img src="https://www.crab-rennes.fr/Cropped%20Favicon%20Crab.png">
-</header>
+  <header class="toolbar">
+    <strong>CrabStock</strong>
+    <nav>
+      <button onclick="document.getElementById('section-stocks').scrollIntoView()">📦 Stocks</button>
+      <button onclick="document.getElementById('section-add').scrollIntoView()">➕ Ajouter ingrédient</button>
+      <button onclick="document.getElementById('section-fermentation').scrollIntoView()">🍺 Suivi fermentation</button>
+      <button onclick="document.getElementById('section-conditionnement').scrollIntoView()">🧴 Suivi conditionnement</button>
+      <button onclick="document.getElementById('section-importexport').scrollIntoView()">⬆️⬇️ Import/Export</button>
+    </nav>
+  </header>
 
-<main id="home" class="content">
-  <div class="actions">
-    <button class="icon-btn" data-open="stocks">📦 <span>Stocks</span></button>
-    <button class="icon-btn" data-open="add">➕ <span>Ajouter ingrédient</span></button>
-    <button class="icon-btn" data-open="use">➖ <span>Sortir ingrédient</span></button>
-    <button class="icon-btn" data-open="containers">🍺 <span>Contenants</span></button>
-    <button class="icon-btn" data-open="history">📜 <span>Historique</span></button>
-    <button class="icon-btn" data-open="import">⬆️ <span>Import/Export</span></button>
-  </div>
-
-  <div id="containers-summary" class="chip-row"></div>
-
-  <div class="toolbar">
-    <input id="search" placeholder="Recherche...">
-    <select id="filter-type">
-      <option value="">Tous types</option>
-      <option value="Malt">Malt</option>
-      <option value="Houblon">Houblon</option>
-      <option value="Levure">Levure</option>
-      <option value="Grain">Grain</option>
-    </select>
-    <label class="check"><input type="checkbox" id="only-low"> Stocks faibles</label>
-  </div>
-
-  <div class="table-wrap">
-    <table id="ingredients-table" class="table">
+  <!-- Stocks -->
+  <section id="section-stocks">
+    <h3>Stocks</h3>
+    <table id="ingredients-table">
       <thead>
         <tr>
           <th>Type</th><th>Fournisseur</th><th>Nom</th><th>Lot</th><th>Spec</th>
@@ -49,75 +38,92 @@
       </thead>
       <tbody></tbody>
     </table>
-  </div>
-</main>
+  </section>
 
-<!-- Panel Ajouter -->
-<div id="panel-add" class="panel" hidden>
-  <div class="panel-head"><button data-close class="ghost">← Retour</button><h2>Ajouter ingrédient</h2></div>
-  <form id="form-add" class="form">
-    <div class="row"><label>Type<select name="Type"><option>Malt</option><option>Houblon</option><option>Levure</option><option>Grain</option></select></label></div>
-    <div class="row"><input name="Fournisseur" placeholder="Fournisseur"></div>
-    <div class="row"><input id="input-nom" name="Nom" placeholder="Nom (auto-complétion)"></div>
-    <div class="row"><input name="Numéro de lot" placeholder="Numéro de lot"></div>
-    <div id="row-spec" class="row"><label id="label-spec">Spec</label><input name="Spec (%AA, EBC...)"></div>
-    <div id="row-peremption" class="row" hidden><input name="Peremption" placeholder="Date de péremption"></div>
-    <div class="row">
-      <select id="select-cond" name="Conditionnement"></select>
-      <input id="input-cond-other" placeholder="Autre conditionnement" style="display:none;">
+  <!-- Ajouter ingrédient -->
+  <section id="section-add">
+    <h3>Ajouter ingrédient</h3>
+    <form id="form-add">
+      <label>Type
+        <select name="Type">
+          <option>Malt</option>
+          <option>Houblon</option>
+          <option>Levure</option>
+          <option>Grain</option>
+        </select>
+      </label>
+      <label>Fournisseur <input name="Fournisseur" /></label>
+      <label>Nom <input id="input-nom" name="Nom" /></label>
+      <label>Numéro de lot <input name="Numéro de lot" /></label>
+      <label>Spec <input name="Spec" placeholder="%AA, EBC, ..."/></label>
+      <label>Conditionnement <input name="Conditionnement" /></label>
+      <label>Notes <input name="Notes" /></label>
+      <label>Qté initiale (g) <input name="Qté initiale (g)" type="number" step="0.01" /></label>
+      <label>Peremption <input name="Peremption" type="date" /></label>
+      <button type="submit">Ajouter</button>
+    </form>
+  </section>
+
+  <!-- Suivi de fermentation -->
+  <section id="section-fermentation">
+    <h3>Suivi de fermentation</h3>
+    <form id="form-fermentation">
+      <label>Bière <input name="nom_biere" /></label>
+      <label>Style <input name="style" /></label>
+      <label>Densité <input name="densite" /></label>
+      <label>Température <input name="temperature" /></label>
+      <label>pH <input name="ph" /></label>
+      <label>Purge <input name="purge" /></label>
+      <button type="submit">Ajouter suivi</button>
+    </form>
+    <table id="fermentation-table">
+      <thead>
+        <tr>
+          <th>Date</th><th>Bière</th><th>Style</th><th>Densité</th><th>Température</th><th>pH</th><th>Purge</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </section>
+
+  <!-- Suivi du conditionnement -->
+  <section id="section-conditionnement">
+    <h3>Suivi du conditionnement</h3>
+    <form id="form-conditionnement">
+      <label>Bière <input name="nom_biere" /></label>
+      <label>Volume (L) <input name="volume_total" type="number" step="0.01"/></label>
+      <label>Fûts <input name="futs" type="number"/></label>
+      <label>33cl <input name="bouteilles_33" type="number"/></label>
+      <label>50cl <input name="bouteilles_50" type="number"/></label>
+      <label>75cl <input name="bouteilles_75" type="number"/></label>
+      <label>44cl <input name="canettes_44" type="number"/></label>
+      <button type="submit">Ajouter conditionnement</button>
+    </form>
+    <table id="conditionnement-table">
+      <thead>
+        <tr>
+          <th>Date</th><th>Bière</th><th>Volume (L)</th><th>Fûts</th><th>33cl</th><th>50cl</th><th>75cl</th><th>44cl</th><th>Lot</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </section>
+
+  <!-- Import / Export -->
+  <section id="section-importexport">
+    <h3>Import / Export</h3>
+    <div class="toolbar">
+      <button id="btn-export">Exporter l’état (JSON)</button>
+      <label>Importer
+        <input id="file-import" type="file" accept="application/json" />
+      </label>
     </div>
-    <div class="row"><input name="Notes" placeholder="Notes"></div>
-    <div class="row"><input name="Qté initiale (g)" placeholder="Qté initiale (g)"></div>
-    <div class="form-actions"><button type="submit" class="primary">Ajouter</button></div>
-  </form>
-</div>
+  </section>
 
-<footer class="footer">
-  CrabStock - Association CRAB Rennes © 2025
-</footer>
+  <footer>
+    <small>CrabStock – Association CRAB Rennes © 2025</small>
+  </footer>
+
+  script_final.js</script>
 </body>
 </html>
-
-
-
-
-<!-- Panel Fermentation -->
-<div id='panel-fermentation' class='panel' hidden>
-  <div class='panel-head'><button data-close class='ghost'>← Retour</button><h2>Suivi de fermentation</h2></div>
-  <form id='form-fermentation' class='form'>
-    <div class='row'><input name='nom_biere' placeholder='Nom de la bière'></div>
-    <div class='row'><input name='style' placeholder='Style'></div>
-    <div class='row'><input name='densite' placeholder='Densité (SG ou °Plato)'></div>
-    <div class='row'><input name='temperature' placeholder='Température (°C)'></div>
-    <div class='row'><input name='ph' placeholder='pH'></div>
-    <div class='row'><input name='purge' placeholder='Date purge'></div>
-    <div class='form-actions'><button type='submit' class='primary'>Ajouter suivi</button></div>
-  </form>
-  <div class='table-wrap'>
-    <table id='fermentation-table' class='table'>
-      <thead><tr><th>Date</th><th>Bière</th><th>Style</th><th>Densité</th><th>Température</th><th>pH</th><th>Purge</th></tr></thead>
-      <tbody></tbody>
-    </table>
-  </div>
-</div>
-
-<!-- Panel Conditionnement -->
-<div id='panel-conditionnement' class='panel' hidden>
-  <div class='panel-head'><button data-close class='ghost'>← Retour</button><h2>Suivi du conditionnement</h2></div>
-  <form id='form-conditionnement' class='form'>
-    <div class='row'><input name='nom_biere' placeholder='Nom de la bière'></div>
-    <div class='row'><input name='volume_total' placeholder='Volume total (L)'></div>
-    <div class='row'><input name='futs' placeholder='Fûts (nombre)'></div>
-    <div class='row'><input name='bouteilles_33' placeholder='Bouteilles 33cl'></div>
-    <div class='row'><input name='bouteilles_50' placeholder='Bouteilles 50cl'></div>
-    <div class='row'><input name='bouteilles_75' placeholder='Bouteilles 75cl'></div>
-    <div class='row'><input name='canettes_44' placeholder='Canettes 44cl'></div>
-    <div class='form-actions'><button type='submit' class='primary'>Ajouter conditionnement</button></div>
-  </form>
-  <div class='table-wrap'>
-    <table id='conditionnement-table' class='table'>
-      <thead><tr><th>Date</th><th>Bière</th><th>Volume (L)</th><th>Fûts</th><th>33cl</th><th>50cl</th><th>75cl</th><th>44cl</th><th>Lot</th></tr></thead>
-      <tbody></tbody>
-    </table>
-  </div>
-</div>
