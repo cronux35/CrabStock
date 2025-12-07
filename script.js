@@ -1,342 +1,389 @@
 
-// ---------- IndexedDB ----------
-const DB_NAME = 'brasserie-stock';
-const STORE = 'data';
+// CrabStock – modern responsive UI
+// Data stored in IndexedDB
+
+const DB_NAME = 'crabstock-db';
+const STORE = 'state';
 let db;
 
+// ---------- IndexedDB ----------
 function openDB() {
   return new Promise((resolve, reject) => {
-    const req = indexedDB.open(DB_NAME, 1);
-    req.onupgradeneeded = (e) => {
+    const r = indexedDB.open(DB_NAME, 1);
+    r.onupgradeneeded = (e) => {
       db = e.target.result;
       if (!db.objectStoreNames.contains(STORE)) db.createObjectStore(STORE);
     };
-    req.onsuccess = (e) => { db = e.target.result; resolve(db); };
-    req.onerror = (e) => reject(e);
+    r.onsuccess = (e) => { db = e.target.result; resolve(db); };
+    r.onerror = reject;
   });
 }
-async function getData() {
+async function getState() {
   await openDB();
   return new Promise((resolve) => {
-    const tx = db.transaction(STORE, 'readonly');
-    const store = tx.objectStore(STORE);
-    const req = store.get('state');
+    const tx = db.transaction(STORE,'readonly');
+    const st = tx.objectStore(STORE);
+    const req = st.get('state');
     req.onsuccess = () => resolve(req.result || seed());
   });
 }
-async function setData(data) {
+async function setState(state) {
   await openDB();
   return new Promise((resolve) => {
-    const tx = db.transaction(STORE, 'readwrite');
-    tx.objectStore(STORE).put(data, 'state');
+    const tx = db.transaction(STORE,'readwrite');
+    tx.objectStore(STORE).put(state,'state');
     tx.oncomplete = () => resolve(true);
   });
 }
 function seed() {
   return {
-    ingredients: [],
-    containers: { bouteilles: { '33cl': 0, '50cl': 0, '75cl': 0 }, canettes: { '44cl': 0 } },
+    ingredients: [], // items with fields (see import/add)
+    containers: { bouteilles: { '33cl':0,'50cl':0,'75cl':0 }, canettes: { '44cl':0 } },
     mouvements: [],
-    config: {
-      thresholds: { malt: 1000, houblon: 100, levure: 50, grain: 500 },
-      thresholdsContainers: { bouteilles: 50, canettes: 50 },
-      blockNegative: true
-    }
+    config: { thresholds: { malt: 1000, houblon: 100, levure: 50, divers: 200 },
+              thresholdsContainers: { bouteilles: 50, canettes: 50 },
+              blockNegative: true }
   };
 }
 
 // ---------- Helpers ----------
+const byId = (id)=>document.getElementById(id);
 function unitForType(type) {
-  const t = (type || '').toLowerCase();
-  return (t.includes('malt') || t.includes('houblon') || t.includes('levure') || t.includes('grain')) ? 'g' : 'unit';
+  const t = (type||'').toLowerCase();
+  if (['malt','houblon','levure','grain'].some(x=>t.includes(x))) return 'g';
+  return t.includes('divers') ? 'g' : 'unit'; // par défaut 'g' pour divers; ajustable
 }
-function isLowStock(item, cfg) {
-  const t = (item['Type'] || '').toLowerCase();
-  const rest = Number(item['Qté restante'] || 0);
+function isLow(item, cfg) {
+  const t = (item.Type||'').toLowerCase();
+  const rest = Number(item['Qté restante (g)']||0);
   if (t.includes('malt'))    return rest <= cfg.thresholds.malt;
   if (t.includes('houblon')) return rest <= cfg.thresholds.houblon;
   if (t.includes('levure'))  return rest <= cfg.thresholds.levure;
-  if (t.includes('grain'))   return rest <= cfg.thresholds.grain;
-  return false;
+  return rest <= cfg.thresholds.divers;
 }
-function toNum(v) {
-  if (v === null || v === undefined) return 0;
-  const s = String(v).replace(',', '.');
-  const n = parseFloat(s);
-  return Number.isNaN(n) ? 0 : n;
-}
+function toNum(v){const n=parseFloat(String(v).replace(',','.'));return Number.isNaN(n)?0:n;}
+function today(){return new Date().toISOString().slice(0,10);}
 
-// ---------- Render ----------
-function renderIngredients(data) {
+// ---------- Navigation ----------
+function openPanel(id){
+  document.querySelectorAll('.panel').forEach(p=>p.hidden=true);
+  document.getElementById('panel-'+id).hidden=false;
+  document.getElementById('home').style.display='none';
+}
+function backHome(){
+  document.querySelectorAll('.panel').forEach(p=>p.hidden=true);
+  document.getElementById('home').style.display='';
+}
+document.querySelectorAll('[data-open]').forEach(el=>{
+  el.addEventListener('click', ()=>openPanel(el.dataset.open));
+});
+document.querySelectorAll('[data-close]').forEach(el=>{
+  el.addEventListener('click', backHome);
+});
+
+// ---------- Render Stocks ----------
+function renderStocks(state){
   const tbody = document.querySelector('#ingredients-table tbody');
-  tbody.innerHTML = '';
-  const q = (document.getElementById('search').value || '').toLowerCase();
-  const onlyLow = document.getElementById('only-low').checked;
+  const q = (byId('search').value||'').toLowerCase();
+  const typeFilter = byId('filter-type').value;
+  const onlyLow = byId('only-low').checked;
 
-  data.ingredients
-    .filter(it => {
-      const s = [it['Type'], it['Nom + Fournisseur'], it['Numéro de lot']]
-        .map(x => (x || '') + '').join(' ').toLowerCase();
+  tbody.innerHTML='';
+  state.ingredients
+    .filter(it=>{
+      const s = [it.Type,it.Fournisseur,it.Nom,it['Numéro de lot']].map(x=>(x||'')+'').join(' ').toLowerCase();
       const match = !q || s.includes(q);
-      const low = isLowStock(it, data.config);
-      return match && (!onlyLow || low);
+      const tmatch = !typeFilter || (it.Type===typeFilter);
+      const low = isLow(it, state.config);
+      return match && tmatch && (!onlyLow || low);
     })
-    .forEach(it => {
+    .forEach(it=>{
       const tr = document.createElement('tr');
-      const cols = ['Type','Nom + Fournisseur','Numéro de lot','Spec (%AA, EBC...)',
-                    'Conditionnement','Notes','Qté initiale (g)','Qté utilisée (g)','Qté restante'];
-      cols.forEach(c => {
+      const specStr = it.Type==='Malt' ? `${it.Spec_EBC??''} EBC`
+                     : it.Type==='Houblon' ? `${it.Spec_AA??''} %AA`
+                     : it.Type==='Levure' ? `DLUO ${it.Peremption??''}`
+                     : (it.Spec??'');
+      const fields = [
+        it.Type, it.Fournisseur, it.Nom, it['Numéro de lot']||'',
+        specStr, it.Conditionnement||'', it.Notes||'',
+        it['Qté initiale (g)']??'', it['Qté utilisée (g)']??'', it['Qté restante (g)']??''
+      ];
+      fields.forEach((v,i)=>{
         const td = document.createElement('td');
-        const val = it[c] != null ? it[c] : '';
-        td.textContent = val;
-        if (c === 'Qté restante') {
-          const n = Number(val || 0);
-          td.classList.remove('negative','low','ok');
-          if (n < 0) td.classList.add('negative');
-          else if (isLowStock(it, data.config)) td.classList.add('low');
-          else td.classList.add('ok');
+        td.textContent=v;
+        if (i===9){ // restante
+          const rest = Number(v||0);
+          td.classList.add(rest<0?'neg':isLow(it,state.config)?'low':'');
         }
         tr.appendChild(td);
       });
-      const tdAct = document.createElement('td');
-      tdAct.innerHTML = `
-        entreeEntrée</button>
-        sortieSortie</button>
-        ajustementAjustement</button>`;
-      tdAct.querySelectorAll('button').forEach(b => b.addEventListener('click', () => openMvtModal(b.dataset.action, it, data)));
-      tr.appendChild(tdAct);
+      tbody.appendChild(tr);
+    });
+
+  // Contenants summary
+  const cs = byId('containers-summary');
+  cs.innerHTML='';
+  const chips = [];
+  for(const [k,v] of Object.entries(state.containers.bouteilles)) chips.push(`🍾 ${k}: ${v}`);
+  for(const [k,v] of Object.entries(state.containers.canettes))   chips.push(`🥫 ${k}: ${v}`);
+  chips.forEach(t=>{ const c=document.createElement('span'); c.className='chip'; c.textContent=t; cs.appendChild(c); });
+}
+['search','filter-type','only-low'].forEach(id=>byId(id).addEventListener('input',()=>getState().then(renderStocks)));
+
+// ---------- Add Ingredient ----------
+const formAdd = byId('form-add');
+const rowSpec = byId('row-spec'), labelSpec = byId('label-spec');
+const rowPeremp = byId('row-peremption');
+formAdd.querySelector('select[name="Type"]').addEventListener('change',(e)=>{
+  const t = e.target.value;
+  rowPeremp.hidden = (t!=='Levure');
+  labelSpec.textContent = t==='Malt' ? 'EBC' : t==='Houblon' ? '%AA' : 'Spec';
+  formAdd.querySelector('input[name="Spec (%AA, EBC...)"]').placeholder =
+    t==='Malt' ? 'ex. 15 EBC' : t==='Houblon' ? 'ex. 6.5 %AA' : 'ex. info libre';
+});
+formAdd.addEventListener('submit', async (e)=>{
+  e.preventDefault();
+  const fd = new FormData(formAdd);
+  const t = fd.get('Type');
+  const base = {
+    Type:t, Fournisseur:fd.get('Fournisseur'), Nom:fd.get('Nom'),
+    'Numéro de lot':fd.get('Numéro de lot')||'',
+    Conditionnement:fd.get('Conditionnement')||'',
+    Notes:fd.get('Notes')||'',
+    'Qté initiale (g)': toNum(fd.get('Qté initiale (g)')),
+    'Qté utilisée (g)': 0,
+    'Qté restante (g)': toNum(fd.get('Qté initiale (g)')),
+  };
+  if (t==='Malt') base.Spec_EBC = toNum(fd.get('Spec (%AA, EBC...)'));
+  else if (t==='Houblon') base.Spec_AA = toNum(fd.get('Spec (%AA, EBC...)'));
+  else if (t==='Levure') base.Peremption = fd.get('Peremption');
+
+  // id stable
+  const id = [t, base.Fournisseur, base.Nom, base['Numéro de lot']].map(s=>String(s||'').trim()).filter(Boolean).join('::');
+  base.id = id;
+  base.unite = 'g';
+
+  const state = await getState();
+  state.ingredients.push(base);
+  state.mouvements.push({date:today(), type:'entree', objet:`${t} ${base.Nom}`, quantite:base['Qté initiale (g)'], unite:'g', motif:'ajout stock', notes:''});
+  await setState(state);
+  alert('Ingrédient ajouté');
+  backHome();
+});
+
+// ---------- Use Ingredient (Sortie) ----------
+const formUse = byId('form-use');
+const useSel = byId('use-select');
+const useSearch = byId('use-search');
+async function repopUseSelect(){
+  const state = await getState();
+  const q = (useSearch.value||'').toLowerCase();
+  useSel.innerHTML='';
+  state.ingredients
+    .filter(it=>{
+      const s = [it.Type,it.Fournisseur,it.Nom,it['Numéro de lot']].map(x=>(x||'')+'').join(' ').toLowerCase();
+      return !q || s.includes(q);
+    })
+    .forEach(it=>{
+      const opt = document.createElement('option');
+      opt.value = it.id;
+      opt.textContent = `${it.Type} — ${it.Nom} (${it.Fournisseur}) lot ${it['Numéro de lot']||'-'} | restant: ${it['Qté restante (g)']??0} g`;
+      useSel.appendChild(opt);
+    });
+}
+useSearch.addEventListener('input', repopUseSelect);
+document.querySelector('[data-open="use"]').addEventListener('click', repopUseSelect);
+
+formUse.addEventListener('submit', async (e)=>{
+  e.preventDefault();
+  const state = await getState();
+  const id = useSel.value;
+  const it = state.ingredients.find(x=>x.id===id);
+  if (!it) return alert('Sélection invalide.');
+  const qty = toNum(formUse.querySelector('input[name="quantite"]').value);
+  if (qty<=0) return alert('Quantité invalide.');
+  const reste = toNum(it['Qté restante (g)']);
+  if (qty>reste && state.config.blockNegative) {
+    return alert('Refusé: la sortie dépasse le stock restant.');
+  }
+  it['Qté utilisée (g)'] = toNum(it['Qté utilisée (g)']) + qty;
+  it['Qté restante (g)'] = reste - qty;
+
+  const motif = formUse.querySelector('input[name="motif"]').value||'';
+  const notes = formUse.querySelector('input[name="notes"]').value||'';
+  state.mouvements.push({date:today(), type:'sortie', objet:`${it.Type} ${it.Nom}`, quantite:qty, unite:'g', motif, notes});
+  await setState(state);
+  alert('Sortie enregistrée');
+  backHome();
+});
+
+// ---------- Containers IN/OUT ----------
+document.querySelectorAll('[data-cont]').forEach(btn=>{
+  btn.addEventListener('click', async ()=>{
+    const state = await getState();
+    const [group,size] = btn.dataset.cont.split('.');
+    const dir = btn.dataset.dir; // in/out
+    const inputId = `${group==='bouteilles'?'bouteilles':'canettes'}-${size.replace('cl','')}`;
+    const val = parseInt(byId(inputId).value||'0',10);
+    if (val<=0) return alert('Quantité invalide.');
+    const before = state.containers[group][size]||0;
+    const after = dir==='in' ? before + val : before - val;
+    if (after<0 && state.config.blockNegative) return alert('Refusé: le stock deviendrait négatif.');
+    state.containers[group][size] = after;
+    state.mouvements.push({
+      date:today(), type: dir==='in'?'container-in':'container-out',
+      objet:`${group}.${size}`, quantite: val, unite:'unit', motif:'', notes:''
+    });
+    await setState(state);
+    alert('Mouvement conteneur OK');
+    renderStocks(state);
+  });
+});
+
+// ---------- History ----------
+function renderHistory(state){
+  const tbody = document.querySelector('#mvt-table tbody');
+  const tf = byId('history-filter-type').value;
+  const q = (byId('history-search').value||'').toLowerCase();
+  tbody.innerHTML='';
+  (state.mouvements||[])
+    .filter(m=>{
+      const tmatch = !tf || m.type===tf;
+      const s = [m.type,m.objet,m.motif,m.notes].map(x=>(x||'')+'').join(' ').toLowerCase();
+      return tmatch && (!q || s.includes(q));
+    })
+    .forEach(m=>{
+      const tr = document.createElement('tr');
+      ['date','type','objet','quantite','unite','motif','notes'].forEach(k=>{
+        const td = document.createElement('td'); td.textContent=m[k]??''; tr.appendChild(td);
+      });
       tbody.appendChild(tr);
     });
 }
+['history-filter-type','history-search'].forEach(id=>byId(id).addEventListener('input',()=>getState().then(renderHistory)));
+document.querySelector('[data-open="history"]').addEventListener('click', ()=>getState().then(renderHistory));
 
-function renderContainers(data) {
-  const b = data.containers.bouteilles, c = data.containers.canettes;
-  const id = (size) => document.getElementById(`bouteilles-${size.replace('cl','')}`);
-  const ic = (size) => document.getElementById(`canettes-${size.replace('cl','')}`);
-  if (id('33cl')) id('33cl').value = b['33cl'] ?? 0;
-  if (id('50cl')) id('50cl').value = b['50cl'] ?? 0;
-  if (id('75cl')) id('75cl').value = b['75cl'] ?? 0;
-  if (ic('44cl')) ic('44cl').value = c['44cl'] ?? 0;
-}
-
-function renderMouvements(data) {
-  const tbody = document.querySelector('#mvt-table tbody');
-  tbody.innerHTML = '';
-  (data.mouvements || []).forEach(m => {
-    const tr = document.createElement('tr');
-    ['date','type','objet','quantite','unite','motif','notes']
-      .forEach(k => { const td = document.createElement('td'); td.textContent = m[k] || ''; tr.appendChild(td); });
-    tbody.appendChild(tr);
-  });
-}
-
-function renderSettings(data) {
-  const th = data.config.thresholds, tc = data.config.thresholdsContainers;
-  document.getElementById('th-malt').value = th.malt;
-  document.getElementById('th-houblon').value = th.houblon;
-  document.getElementById('th-levure').value = th.levure;
-  document.getElementById('th-grain').value = th.grain;
-  document.getElementById('th-bouteilles').value = tc.bouteilles;
-  document.getElementById('th-canettes').value = tc.canettes;
-  document.getElementById('block-negative').checked = !!data.config.blockNegative;
-}
-
-// ---------- UI wiring ----------
-function switchTab(tab) {
-  document.querySelectorAll('.tab').forEach(s => s.classList.remove('active'));
-  document.getElementById(tab).classList.add('active');
-}
-function wireUI(data) {
-  document.querySelectorAll('.tab-btn').forEach(b => b.addEventListener('click', () => switchTab(b.dataset.tab)));
-  document.getElementById('search').addEventListener('input', () => renderIngredients(data));
-  document.getElementById('only-low').addEventListener('change', () => renderIngredients(data));
-
-  // Ajustement contenants
-  document.querySelectorAll('.adjust').forEach(btn => btn.addEventListener('click', async () => {
-    const [group, size] = btn.dataset.target.split('.');
-    const input = document.getElementById(`${group === 'bouteilles' ? 'bouteilles' : 'canettes'}-${size.replace('cl','')}`);
-    const val = parseInt(input.value || '0', 10);
-    const before = data.containers[group][size] || 0;
-    data.containers[group][size] = val;
-    data.mouvements.push({
-      date: new Date().toISOString().slice(0,10),
-      type: 'ajustement-contenant',
-      objet: `${group}.${size}`,
-      quantite: val - before,
-      unite: 'unit',
-      motif: 'ajustement manuel',
-      notes: ''
-    });
-    await setData(data);
-    renderMouvements(data);
-  }));
-
-  // Ajouter format
-  document.getElementById('add-format').addEventListener('click', async () => {
-    const group = document.getElementById('new-format-group').value;
-    const size = (document.getElementById('new-format-size').value || '').trim();
-    if (!size) return alert('Précise un format (ex: 37.5cl)');
-    if (!data.containers[group]) data.containers[group] = {};
-    if (data.containers[group][size] == null) data.containers[group][size] = 0;
-    await setData(data);
-    alert(`Format ajouté: ${group}.${size}`);
-  });
-
-  // Export / Import
-  document.getElementById('export-json').addEventListener('click', () => {
-    const blob = new Blob([JSON.stringify(data, null, 2)], {type:'application/json'});
-    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'stock-brasserie.json'; a.click();
-  });
-  document.getElementById('copy-json').addEventListener('click', async () => {
-    await navigator.clipboard.writeText(JSON.stringify(data, null, 2));
-    alert('JSON copié dans le presse‑papiers');
-  });
-  document.getElementById('export-csv').addEventListener('click', () => exportCSV(data));
-
-  document.getElementById('import-json').addEventListener('click', async () => {
-    const f = document.getElementById('import-file-json').files[0];
-    if (!f) return alert('Choisir un fichier JSON');
-    const text = await f.text();
-    const imported = JSON.parse(text);
-    await setData(imported);
-    location.reload();
-  });
-
-  document.getElementById('import-csv').addEventListener('click', async () => {
-    const f = document.getElementById('import-file-csv').files[0];
-    if (!f) return alert('Choisir un fichier CSV (feuille Stock)');
-    const text = await f.text();
-    const items = parseStockCSV(text);
-    items.forEach(it => {
-      const key = [it['Type']||'', it['Nom + Fournisseur']||it['Nom']||'', it['Numéro de lot']||'']
-        .map(s => String(s).trim()).filter(Boolean).join('::');
-      it.id = key;
-      it.unite = unitForType(it['Type']);
-      ['Qté initiale (g)','Qté utilisée (g)','Qté restante'].forEach(k => {
-        const v = (it[k] ?? '').toString().replace(',', '.');
-        it[k] = isNaN(parseFloat(v)) ? null : parseFloat(v);
-      });
-    });
-    data.ingredients = items;
-    await setData(data);
-    location.reload();
-  });
-
-  // FAB mouvement global
-  document.getElementById('new-mouvement').addEventListener('click', () => openMvtModal('ajustement', null, data));
-
-  // Settings
-  document.getElementById('save-settings').addEventListener('click', async () => {
-    const th = data.config.thresholds, tc = data.config.thresholdsContainers;
-    th.malt    = parseInt(document.getElementById('th-malt').value || '0', 10);
-    th.houblon = parseInt(document.getElementById('th-houblon').value || '0', 10);
-    th.levure  = parseInt(document.getElementById('th-levure').value || '0', 10);
-    th.grain   = parseInt(document.getElementById('th-grain').value || '0', 10);
-    tc.bouteilles = parseInt(document.getElementById('th-bouteilles').value || '0', 10);
-    tc.canettes   = parseInt(document.getElementById('th-canettes').value || '0', 10);
-    data.config.blockNegative = !!document.getElementById('block-negative').checked;
-    await setData(data);
-    alert('Paramètres enregistrés');
-    renderIngredients(data);
-  });
-}
-
-// ---------- Export CSV ----------
-function exportCSV(data) {
-  const rows = [['Type','Nom + Fournisseur','Lot','Spec','Conditionnement','Notes','Initial (g)','Utilisée (g)','Restante (g)']];
-  data.ingredients.forEach(it => {
-    rows.push([
-      it['Type']||'', it['Nom + Fournisseur']||'', it['Numéro de lot']||'',
-      it['Spec (%AA, EBC...)']||'', it['Conditionnement']||'', it['Notes']||'',
-      it['Qté initiale (g)'] ?? '', it['Qté utilisée (g)'] ?? '', it['Qté restante'] ?? ''
-    ]);
-  });
-  const content = rows.map(r => r.map(v => `"${String(v).replaceAll('"','\\"')}"`).join(',')).join('\n');
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(new Blob([content], {type:'text/csv'}));
-  a.download = 'ingredients.csv'; a.click();
-}
-
-// ---------- Mouvement ----------
-function openMvtModal(type, item, data) {
-  const quantite = parseFloat(prompt(`Quantité (${item ? 'g' : 'unit'})`));
-  if (Number.isNaN(quantite)) return;
-  const motif = prompt('Motif (ex: brassin #5, inventaire, casse...)') || '';
-  const notes = prompt('Notes') || '';
-
-  data.mouvements = data.mouvements || [];
-  const m = {
-    date: new Date().toISOString().slice(0,10),
-    type,
-    objet: item ? (item['Nom + Fournisseur'] || item['Nom'] || item.id) : 'global',
-    quantite,
-    unite: item ? 'g' : 'unit',
-    motif,
-    notes
-  };
-  data.mouvements.push(m);
-
-  if (item) {
-    const t = data.ingredients.find(i => i.id === item.id);
-    if (type === 'entree') {
-      t['Qté initiale (g)'] = toNum(t['Qté initiale (g)']) + quantite;
-      t['Qté restante']     = toNum(t['Qté restante']) + quantite;
-    } else if (type === 'sortie') {
-      const reste = toNum(t['Qté restante']);
-      if (quantite > reste) {
-        if (data.config.blockNegative) {
-          alert('Opération refusée : la sortie dépasserait le stock restant.');
-          return;
-        } else if (!confirm('La quantité sortie dépasse le stock restant. Continuer ?')) {
-          return;
-        }
-      }
-      t['Qté utilisée (g)'] = toNum(t['Qté utilisée (g)']) + quantite;
-      t['Qté restante']     = reste - quantite;
-    } else if (type === 'ajustement') {
-      // Ajuste le restant, sans impacter “Utilisée (g)”
-      t['Qté restante'] = toNum(t['Qté restante']) + quantite;
-    }
+// ---------- Import Excel / CSV ----------
+async function importFromSheetJS(file) {
+  const data = await file.arrayBuffer();
+  const wb = XLSX.read(data, { type:'array' });
+  const sheetName = 'Stock';
+  const ws = wb.Sheets[sheetName];
+  if (!ws) return alert(`Feuille "${sheetName}" introuvable.`);
+  const rows = XLSX.utils.sheet_to_json(ws, { header:1, raw:true });
+  // Détecter la ligne d’en-têtes (présence de "Type" + ≥6 colonnes attendues)
+  const NEEDED = ['Type','Fournisseur','Nom','Numéro de lot','Spec (%AA, EBC...)','Conditionnement','Notes','Nom + Fournisseur','Qté initiale (g)','Qté utilisée (g)','Qté restante'];
+  let hi = -1;
+  for (let i=0;i<rows.length;i++){
+    const vals = rows[i].map(v=>String(v||'').trim());
+    const hits = NEEDED.filter(c=>vals.includes(c)).length;
+    if (vals.includes('Type') && hits>=6){ hi=i; break; }
   }
-  setData(data).then(() => { renderIngredients(data); renderMouvements(data); });
+  if (hi<0) return alert('En-têtes non détectés (colonne "Type").');
+  const headers = rows[hi].map(v=>String(v||'').trim());
+  const idx = (name)=> headers.findIndex(h=>h===name);
+  const items = [];
+  for (let r=hi+1; r<rows.length; r++){
+    const row = rows[r];
+    const get = (n)=> { const i=idx(n); return i>=0 ? row[i] : ''; };
+    const item = {
+      Type: get('Type'), Fournisseur:get('Fournisseur'), Nom:get('Nom'),
+      'Numéro de lot':get('Numéro de lot'), Conditionnement:get('Conditionnement'), Notes:get('Notes'),
+      'Qté initiale (g)': parseFloat(String(get('Qté initiale (g)')).replace(',','.')) || null,
+      'Qté utilisée (g)': parseFloat(String(get('Qté utilisée (g)')).replace(',','.')) || null,
+      'Qté restante (g)': parseFloat(String(get('Qté restante')).replace(',','.')) || null
+    };
+    const spec = get('Spec (%AA, EBC...)');
+    if (String(item.Type).trim()==='Malt') item.Spec_EBC = parseFloat(String(spec).replace(',','.')) || null;
+    else if (String(item.Type).trim()==='Houblon') item.Spec_AA = parseFloat(String(spec).replace(',','.')) || null;
+    else item.Spec = spec || '';
+    // id + unit
+    item.id = [item.Type,item.Fournisseur,item.Nom,item['Numéro de lot']].map(s=>String(s||'').trim()).filter(Boolean).join('::');
+    item.unite = 'g';
+    items.push(item);
+  }
+  const state = await getState();
+  state.ingredients = items.filter(it=>it.Type && it.Nom); // on conserve tout ce qui a au moins un Type/Nom
+  await setState(state);
+  alert(`Import Excel OK (${state.ingredients.length} lignes)`);
 }
-
-// ---------- CSV “Stock” -> objets ----------
-function parseStockCSV(text) {
-  const lines = text.replace(/\r/g,'').split('\n').filter(x => x.trim().length > 0);
-  const rows = lines.map(line => {
-    const out = []; let cur = ''; let q = false;
-    for (let i=0;i<line.length;i++){
-      const ch = line[i], nx = line[i+1];
+async function importFromCSV(file){
+  const text = await file.text();
+  const lines = text.replace(/\r/g,'').split('\n').filter(x=>x.trim().length>0);
+  const rows = lines.map(line=>{
+    const out=[]; let cur=''; let q=false;
+    for(let i=0;i<line.length;i++){
+      const ch=line[i], nx=line[i+1];
       if (ch === '"' && q && nx === '"') { cur += '"'; i++; continue; }
-      if (ch === '"') { q = !q; continue; }
+      if (ch === '"') { q=!q; continue; }
       if (ch === ',' && !q) { out.push(cur); cur=''; continue; }
       cur += ch;
     }
-    out.push(cur);
-    return out;
+    out.push(cur); return out;
   });
-
   const headers = rows[0];
-  const idx = (name) => headers.findIndex(h => h.trim().toLowerCase() === name.trim().toLowerCase());
-  const needed = [
-    'Type','Fournisseur','Nom','Numéro de lot','Spec (%AA, EBC...)',
-    'Conditionnement','Notes','Nom + Fournisseur','Qté initiale (g)','Qté utilisée (g)','Qté restante'
-  ];
-  const missing = needed.filter(n => idx(n) === -1);
-  if (missing.length) {
-    alert('Colonnes manquantes : ' + missing.join(', '));
-    return [];
-  }
-  return rows.slice(1).map(r => Object.fromEntries(needed.map(n => [n, r[idx(n)] ?? ''])));
+  const idx = (name)=> headers.findIndex(h=>h.trim().toLowerCase()===name.trim().toLowerCase());
+  const needed = ['Type','Fournisseur','Nom','Numéro de lot','Spec (%AA, EBC...)','Conditionnement','Notes','Nom + Fournisseur','Qté initiale (g)','Qté utilisée (g)','Qté restante'];
+  const missing = needed.filter(n=>idx(n)===-1);
+  if (missing.length) return alert('Colonnes manquantes: '+missing.join(', '));
+  const items = rows.slice(1).map(r=>{
+    const get = (n)=> r[idx(n)] ?? '';
+    const t = get('Type').trim();
+    const spec = get('Spec (%AA, EBC...)');
+    const it = {
+      Type:t, Fournisseur:get('Fournisseur'), Nom:get('Nom'),
+      'Numéro de lot':get('Numéro de lot'), Conditionnement:get('Conditionnement'), Notes:get('Notes'),
+      'Qté initiale (g)': parseFloat(String(get('Qté initiale (g)')).replace(',','.')) || null,
+      'Qté utilisée (g)': parseFloat(String(get('Qté utilisée (g)')).replace(',','.')) || null,
+      'Qté restante (g)': parseFloat(String(get('Qté restante')).replace(',','.')) || null
+    };
+    if (t==='Malt') it.Spec_EBC = parseFloat(String(spec).replace(',','.')) || null;
+    else if (t==='Houblon') it.Spec_AA = parseFloat(String(spec).replace(',','.')) || null;
+    else it.Spec = spec || '';
+    it.id = [it.Type,it.Fournisseur,it.Nom,it['Numéro de lot']].map(s=>String(s||'').trim()).filter(Boolean).join('::');
+    it.unite = 'g';
+    return it;
+  });
+  const state = await getState();
+  state.ingredients = items.filter(it=>it.Type && it.Nom);
+  await setState(state);
+  alert(`Import CSV OK (${state.ingredients.length} lignes)`);
 }
+byId('btn-import-xlsx').addEventListener('click', ()=>{
+  const f = byId('import-xlsx').files[0];
+  if (!f) return alert('Choisir un .xlsx');
+  importFromSheetJS(f);
+});
+byId('btn-import-csv').addEventListener('click', ()=>{
+  const f = byId('import-csv').files[0];
+  if (!f) return alert('Choisir un .csv');
+  importFromCSV(f);
+});
+byId('export-json').addEventListener('click', async ()=>{
+  const state = await getState();
+  const blob = new Blob([JSON.stringify(state,null,2)], {type:'application/json'});
+  const a = document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='crabstock.json'; a.click();
+});
+
+// ---------- Containers add-format ----------
+byId('add-format').addEventListener('click', async ()=>{
+  const state = await getState();
+  const group = byId('new-format-group').value;
+  const size  = (byId('new-format-size').value||'').trim();
+  if (!size) return alert('Format vide.');
+  if (!state.containers[group]) state.containers[group] = {};
+  if (state.containers[group][size]==null) state.containers[group][size]=0;
+  await setState(state);
+  alert(`Format ajouté: ${group}.${size}`);
+});
 
 // ---------- Boot ----------
-window.addEventListener('DOMContentLoaded', async () => {
-  const data = await getData();
-  renderIngredients(data);
-  renderContainers(data);
-  renderMouvements(data);
-  renderSettings(data);
-  wireUI(data);
+window.addEventListener('DOMContentLoaded', async ()=>{
+  const state = await getState();
+  renderStocks(state);
+  // Fill container inputs with current values
+  byId('bouteilles-33').value = state.containers.bouteilles['33cl']||0;
+  byId('bouteilles-50').value = state.containers.bouteilles['50cl']||0;
+  byId('bouteilles-75').value = state.containers.bouteilles['75cl']||0;
+  byId('canettes-44').value   = state.containers.canettes['44cl']||0;
 });
