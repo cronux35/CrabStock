@@ -1,0 +1,169 @@
+
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Brasserie — Stock</title>
+  styles.css
+</head>
+<body>
+  <header class="app-bar elevation-2">
+    <div class="app-bar__title">Brasserie associative — Gestion de stock</div>
+    <nav class="tabs">
+      <button class="tab-btn ripple" data-tab="ingredients">Ingrédients</button>
+      <button class="tab-btn ripple" data-tab="containers">Contenants</button>
+      <button class="tab-btn ripple" data-tab="mouvements">Mouvements</button>
+      <button class="tab-btn ripple" data-tab="importexport">Import/Export</button>
+      <button class="tab-btn ripple" data-tab="settings">Paramètres</button>
+    </nav>
+  </header>
+
+  <main>
+    <section id="ingredients" class="tab active">
+      <div class="card elevation-1">
+        <div class="toolbar">
+          <input id="search" placeholder="Rechercher (nom, fournisseur, type)" />
+          <label class="checkbox"><input type="checkbox" id="only-low" /> Stocks bas</label>
+        </div>
+        <div class="table-wrap">
+          <table id="ingredients-table">
+            <thead>
+              <tr>
+                <th>Type</th>
+                <th>Nom + Fournisseur</th>
+                <th>Lot</th>
+                <th>Spec</th>
+                <th>Conditionnement</th>
+                <th>Notes</th>
+                <th>Initial (g)</th>
+                <th>Utilisée (g)</th>
+                <th>Restante (g)</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <section id="containers" class="tab">
+      <div class="grid">
+        <div class="card elevation-1">
+          <h2>Bouteilles</h2>
+          <div class="row">
+            <label>33cl</label>
+            <input type="number" id="bouteilles-33" min="0" />
+            <button class="adjust ripple" data-target="bouteilles.33cl">Ajuster</button>
+          </div>
+          <div class="row">
+            <label>50cl</label>
+            <input type="number" id="bouteilles-50" min="0" />
+            <button class="adjust ripple" data-target="bouteilles.50cl">Ajuster</button>
+          </div>
+          <div class="row">
+            <label>75cl</label>
+            <input type="number" id="bouteilles-75" min="0" />
+            <button class="adjust ripple" data-target="bouteilles.75cl">Ajuster</button>
+          </div>
+        </div>
+        <div class="card elevation-1">
+          <h2>Canettes</h2>
+          <div class="row">
+            <label>44cl</label>
+            <input type="number" id="canettes-44" min="0" />
+            <button class="adjust ripple" data-target="canettes.44cl">Ajuster</button>
+          </div>
+        </div>
+        <div class="card elevation-1">
+          <h2>Ajouter un format</h2>
+          <div class="row">
+            <label>Groupe</label>
+            <select id="new-format-group">
+              <option value="bouteilles">Bouteilles</option>
+              <option value="canettes">Canettes</option>
+            </select>
+            <input type="text" id="new-format-size" placeholder="ex. 37.5cl" />
+            <button id="add-format" class="ripple">Ajouter</button>
+          </div>
+          <p class="hint">Le nouveau format apparaîtra dans le stock et pourra être ajusté comme les autres.</p>
+        </div>
+      </div>
+    </section>
+
+    <section id="mouvements" class="tab">
+      <div class="card elevation-1">
+        <h2>Mouvements de stock</h2>
+        <p>Entrées / Sorties / <strong>Ajustements</strong> (inventaire, casse…). Les ajustements n’alimentent pas “Utilisée (g)”.</p>
+        <div class="table-wrap">
+          <table id="mvt-table">
+            <thead>
+              <tr>
+                <th>Date</th><th>Type</th><th>Objet</th><th>Quantité</th>
+                <th>Unité</th><th>Motif</th><th>Notes</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+      <button id="new-mouvement" class="fab ripple elevation-3" title="Nouveau mouvement global">＋</button>
+    </section>
+
+    <section id="importexport" class="tab">
+      <div class="grid">
+        <div class="card elevation-1">
+          <h2>Importer JSON</h2>
+          <input type="file" id="import-file-json" accept="application/json" />
+          <button id="import-json" class="ripple">Importer JSON</button>
+        </div>
+        <div class="card elevation-1">
+          <h2>Importer CSV (feuille “Stock”)</h2>
+          <input type="file" id="import-file-csv" accept=".csv,text/csv" />
+          <button id="import-csv" class="ripple">Importer CSV</button>
+          <p class="hint">Depuis Excel : Enregistrer la feuille <strong>Stock</strong> en <em>CSV UTF‑8</em> (colonnes identiques).</p>
+        </div>
+        <div class="card elevation-1">
+          <h2>Exports</h2>
+          <button id="export-json" class="ripple">Exporter JSON</button>
+          <button id="export-csv" class="ripple">Exporter CSV (ingrédients)</button>
+          <button id="copy-json" class="ripple">Copier JSON</button>
+          <p class="hint">Versionne le JSON exporté dans le repo (dossier <code>data/</code>).</p>
+        </div>
+      </div>
+    </section>
+
+    <section id="settings" class="tab">
+      <div class="card elevation-1">
+        <h2>Paramètres</h2>
+        <div class="grid">
+          <div class="card elevation-0">
+            <h3>Seuils d’alerte (g)</h3>
+            <div class="row"><label>Malt</label><input type="number" id="th-malt" min="0" /></div>
+            <div class="row"><label>Houblon</label><input type="number" id="th-houblon" min="0" /></div>
+            <div class="row"><label>Levure</label><input type="number" id="th-levure" min="0" /></div>
+            <div class="row"><label>Grain</label><input type="number" id="th-grain" min="0" /></div>
+          </div>
+          <div class="card elevation-0">
+            <h3>Contenants – seuils (unités)</h3>
+            <div class="row"><label>Bouteilles</label><input type="number" id="th-bouteilles" min="0" /></div>
+            <div class="row"><label>Canettes</label><input type="number" id="th-canettes" min="0" /></div>
+          </div>
+          <div class="card elevation-0">
+            <h3>Validation</h3>
+            <label class="checkbox"><input type="checkbox" id="block-negative" /> Bloquer les sorties qui rendent le stock négatif</label>
+            <button id="save-settings" class="ripple">Enregistrer</button>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="app-footer">
+    <small>© Brasserie associative – Application locale, sans serveur</small>
+  </footer>
+
+  script.js</script>
+</body>
+</html>
